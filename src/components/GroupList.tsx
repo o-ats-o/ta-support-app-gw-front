@@ -56,11 +56,11 @@ const GroupList: React.FC<GroupListProps> = ({ onGroupClick, displayMode }) => {
       {groups.map((group, index) => (
         <li
           key={index}
-          className="flex items-center justify-between py-2 px-4 border-2 border-gray-50 bg-white cursor-pointer hover:bg-gray-100"
+          className="flex items-center justify-between py-2 px-4 border-2 border-gray-50 bg-white cursor-pointer hover:bg-gray-100 font-bold"
           style={{ minHeight: "60px" }}
           onClick={() => onGroupClick(group.name)}
         >
-          <span>{group.name}</span>
+          <span className="text-lg">{group.name}</span>
           {displayMode === "発話回数" ? (
             <>
               <span>{group.count}回</span>
