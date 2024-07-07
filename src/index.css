@@ -16,6 +16,10 @@ code {
     monospace;
 }
 
-.group-list + .group-detail {
-  border-left-width: 0;
+.group-list {
+  border-right-width: 0;
+}
+
+.group-detail {
+  border-left-width: 1px;
 }
