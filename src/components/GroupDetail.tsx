@@ -1,111 +1,13 @@
 import React, { useState } from "react";
 import { Line } from "react-chartjs-2";
 import "chart.js/auto";
-
-type GroupData = {
-  [key: string]: {
-    data: number[];
-    emotion: number[];
-    history: string[];
-    scenario: string;
-  };
-};
-
-const groupData: GroupData = {
-  "Group A": {
-    data: [20, 30, 25, 15, 20],
-    emotion: [0.4, 0.5, 0.3, 0.2, 0.3],
-    history: [
-      "Speaker 0: ...",
-      "Speaker 2: ...",
-      "Speaker 1: ...",
-      "Speaker 0: ...",
-      "Speaker 0: ...",
-      "Speaker 0: ...",
-      "Speaker 0: ...",
-      "Speaker 0: ...",
-      "Speaker 0: ...",
-      "Speaker 0: ...",
-      "Speaker 0: ...",
-      "Speaker 0: ...",
-      "Speaker 0: ...",
-      "Speaker 0: ...",
-      "Speaker 0: ...",
-      "Speaker 0: ...",
-      "Speaker 0: ...",
-      "Speaker 0: ...",
-      "Speaker 0: ...",
-      "Speaker 0: ...",
-    ],
-    scenario: "Generated scenario text for Group A.",
-  },
-  "Group B": {
-    data: [15, 25, 20, 10, 15],
-    emotion: [0.1, 0.0, -0.1, -0.2, -0.1],
-    history: [
-      "Speaker 1: ...",
-      "Speaker 0: ...",
-      "Speaker 2: ...",
-      "Speaker 1: ...",
-    ],
-    scenario: "Generated scenario text for Group B.",
-  },
-  "Group C": {
-    data: [10, 20, 15, 5, 10],
-    emotion: [-0.2, -0.3, -0.4, -0.5, -0.4],
-    history: [
-      "Speaker 2: ...",
-      "Speaker 1: ...",
-      "Speaker 0: ...",
-      "Speaker 2: ...",
-    ],
-    scenario: "Generated scenario text for Group C.",
-  },
-  "Group D": {
-    data: [25, 35, 30, 20, 25],
-    emotion: [0.5, 0.6, 0.7, 0.8, 0.7],
-    history: [
-      "Speaker 0: ...",
-      "Speaker 1: ...",
-      "Speaker 2: ...",
-      "Speaker 0: ...",
-    ],
-    scenario: "Generated scenario text for Group D.",
-  },
-  "Group E": {
-    data: [5, 15, 10, 0, 5],
-    emotion: [-0.1, -0.2, -0.1, -0.1, -0.1],
-    history: [
-      "Speaker 1: ...",
-      "Speaker 2: ...",
-      "Speaker 0: ...",
-      "Speaker 1: ...",
-    ],
-    scenario: "Generated scenario text for Group E.",
-  },
-  "Group F": {
-    data: [18, 28, 23, 13, 18],
-    emotion: [0.2, 0.3, 0.4, 0.3, 0.3],
-    history: [
-      "Speaker 2: ...",
-      "Speaker 0: ...",
-      "Speaker 1: ...",
-      "Speaker 2: ...",
-    ],
-    scenario: "Generated scenario text for Group F.",
-  },
-};
-
-interface GroupDetailProps {
-  groupName: string;
-  displayMode: string;
-}
+import { GroupDetailProps, groupDetailData } from "../types";
 
 const GroupDetail: React.FC<GroupDetailProps> = ({
   groupName,
   displayMode,
 }) => {
-  const group = groupData[groupName];
+  const group = groupDetailData[groupName];
   const [graphMode, setGraphMode] = useState(displayMode);
 
   const data = {
