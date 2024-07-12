@@ -1,5 +1,3 @@
-import React from "react";
-
 const Header = () => {
   return (
     <div className="fixed top-0 w-full h-16 p-5 z-20 flex justify-between transition-all ease-in duration-500 text-xl font-bold shadow-md bg-[rgba(36,141,116,1)]">
