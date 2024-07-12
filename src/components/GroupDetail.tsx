@@ -1,41 +1,48 @@
-import React, { useState } from "react";
-import { Line } from "react-chartjs-2";
-import "chart.js/auto";
+import React, { useState, useEffect } from "react";
 import { GroupDetailProps, groupDetailData } from "../types";
+import TimeTransitionGraph from "./TimeTransitionGraph";
 
 const GroupDetail: React.FC<GroupDetailProps> = ({
   groupName,
   displayMode,
 }) => {
-  const group = groupDetailData[groupName];
   const [graphMode, setGraphMode] = useState(displayMode);
+  const [visibleGroups, setVisibleGroups] = useState([groupName]);
+  const [selectedGroup, setSelectedGroup] = useState<string>(groupName);
 
-  const data = {
-    labels: ["13:20", "13:25", "13:30", "13:35", "13:40"],
-    datasets: [
-      {
-        label: graphMode,
-        data: graphMode === "発話回数" ? group.data : group.emotion,
-        borderColor:
-          graphMode === "感情" ? "rgba(255,159,64,1)" : "rgba(75,192,192,1)",
-        borderWidth: 2,
-        fill: false,
-      },
-    ],
+  useEffect(() => {
+    if (groupName) {
+      setVisibleGroups([groupName]);
+      setSelectedGroup(groupName);
+    }
+  }, [groupName]);
+
+  // グループ名に基づいて色を返す関数
+  const getGroupColor = (name: string) => {
+    const colors = [
+      "#FF6384",
+      "#36A2EB",
+      "#FFCE56",
+      "#cc65fe",
+      "#248D74",
+      "#ffcd56",
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
   };
 
-  const options = {
-    scales: {
-      y: {
-        beginAtZero: true,
-      },
-    },
+  // 「all」ボタンのイベントハンドラー
+  const showAllGroups = () => {
+    setVisibleGroups(Object.keys(groupDetailData));
   };
 
   return (
     <div>
       <h2 className="text-xl font-bold mb-2 underline text-[rgba(36,141,116,1)]">
-        {groupName}
+        {selectedGroup}
       </h2>
       <div className="mb-4">
         <h3 className="text-lg mb-1 font-bold text-[rgba(36,141,116,1)]">
@@ -80,7 +87,19 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
               </span>
             </button>
           </div>
-          <Line data={data} options={options} />
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={showAllGroups}
+              className="px-5 py-1 bg-[rgba(36,141,116,1)] text-white rounded hover:bg-[rgba(36,141,116,0.8)]"
+            >
+              all
+            </button>
+          </div>
+          <TimeTransitionGraph
+            graphMode={graphMode}
+            visibleGroups={visibleGroups}
+            getGroupColor={getGroupColor}
+          />
         </div>
       </div>
       <div className="mb-4">
@@ -91,7 +110,7 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
           className="border p-2 overflow-y-auto"
           style={{ minHeight: "15em", maxHeight: "15em" }}
         >
-          {group.history.map((entry, index) => (
+          {groupDetailData[selectedGroup]?.history.map((entry, index) => (
             <p key={index}>{entry}</p>
           ))}
         </div>
@@ -104,7 +123,7 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
           className="border p-2 overflow-y-auto"
           style={{ minHeight: "15em", maxHeight: "15em" }}
         >
-          <p>{group.scenario}</p>
+          <p>{groupDetailData[selectedGroup]?.scenario}</p>
         </div>
       </div>
     </div>
