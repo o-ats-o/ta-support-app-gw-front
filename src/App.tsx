@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import GroupList from "./components/GroupList";
 import GroupDetail from "./components/GroupDetail";
 import Header from "./components/Header";
+import DataDisplay from "./components/DataDisplay"; // DataDisplayをインポート
 
 const App: React.FC = () => {
   const [selectedGroup, setSelectedGroup] = useState("Group A");
@@ -75,6 +76,9 @@ const App: React.FC = () => {
         <div className="flex-1 p-4 overflow-y-auto border rounded-r-md border-[rgba(36,141,116,1)] mt-4 mr-2 group-detail">
           <GroupDetail groupName={selectedGroup} displayMode={displayMode} />
         </div>
+      </div>
+      <div className="p-4">
+        <DataDisplay /> {/* DataDisplayコンポーネントを追加 */}
       </div>
     </div>
   );
