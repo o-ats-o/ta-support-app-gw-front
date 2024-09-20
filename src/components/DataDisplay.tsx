@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 interface ApiData {
   id: number;
@@ -16,19 +17,15 @@ const DataDisplay: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("http://192.168.231.171:8000//api/data/")
+    axios
+      .get("http://192.168.231.171:8000/api/data/?search=g")
       .then((response) => {
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        setData(data);
+        setData(response.data);
         setLoading(false);
       })
       .catch((error) => {
-        setError(error.message);
+        const errorMessage = error.response?.data?.Error || error.message;
+        setError(errorMessage);
         setLoading(false);
       });
   }, []);
