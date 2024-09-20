@@ -23,6 +23,7 @@ export interface GroupListProps {
   onGroupClick: (group: string) => void;
   displayMode: string;
   selectedTime: string;
+  groupData: any[]; // APIレスポンスの型
 }
 
 export interface GroupDetailProps {

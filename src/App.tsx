@@ -1,17 +1,35 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import GroupList from "./components/GroupList";
 import GroupDetail from "./components/GroupDetail";
 import Header from "./components/Header";
 import DataDisplay from "./components/DataDisplay"; // DataDisplayをインポート
+import axios from "axios"; // API呼び出しのためにaxiosをインポート
 
 const App: React.FC = () => {
   const [selectedGroup, setSelectedGroup] = useState("Group A");
   const [displayMode, setDisplayMode] = useState("発話回数");
   const [selectedTime, setSelectedTime] = useState("13:40");
+  const [groupData, setGroupData] = useState<any[]>([]); // APIから取得したデータを保持するステート
 
   const handleGroupClick = (group: string) => {
     setSelectedGroup(group);
   };
+
+  // selectedTimeが変更されたときにAPIリクエストを行う
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(
+          `http://192.168.231.171:8000/api/data/?datetime_after=2024-09-06T23:00:00&datetime_before=2024-09-06T23:04:59`
+        );
+        setGroupData(response.data); // APIレスポンスをstateにセット
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, [selectedTime]); // selectedTimeが変わるたびにAPIリクエストを行う
 
   return (
     <div className="flex flex-col h-screen">
@@ -71,6 +89,7 @@ const App: React.FC = () => {
             onGroupClick={handleGroupClick}
             displayMode={displayMode}
             selectedTime={selectedTime}
+            groupData={groupData} // APIからのデータを渡す
           />
         </div>
         <div className="flex-1 p-4 overflow-y-auto border rounded-r-md border-[rgba(36,141,116,1)] mt-4 mr-2 group-detail">
