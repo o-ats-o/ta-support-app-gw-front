@@ -2,34 +2,64 @@ import React, { useState, useEffect } from "react";
 import GroupList from "./components/GroupList";
 import GroupDetail from "./components/GroupDetail";
 import Header from "./components/Header";
-import DataDisplay from "./components/DataDisplay"; // DataDisplayをインポート
-import axios from "axios"; // API呼び出しのためにaxiosをインポート
+import DataDisplay from "./components/DataDisplay";
+import axios from "axios";
+import { API_BASE_URL, DATE } from "./config";
+
+// 取得する時間を変更したい時はここを変更
+const generateTimeOptions = () => {
+  const times = [];
+  for (let hour = 9; hour <= 12; hour++) {
+    for (let minute = 0; minute < 60; minute += 5) {
+      if (hour === 12 && minute > 5) break;
+      const time = `${hour.toString().padStart(2, "0")}:${minute
+        .toString()
+        .padStart(2, "0")}〜`;
+      times.push(time);
+    }
+  }
+  return times;
+};
 
 const App: React.FC = () => {
   const [selectedGroup, setSelectedGroup] = useState("Group A");
   const [displayMode, setDisplayMode] = useState("発話回数");
-  const [selectedTime, setSelectedTime] = useState("13:40");
-  const [groupData, setGroupData] = useState<any[]>([]); // APIから取得したデータを保持するステート
+  const [selectedTime, setSelectedTime] = useState("09:00〜");
+  const [groupData, setGroupData] = useState<any[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleGroupClick = (group: string) => {
     setSelectedGroup(group);
   };
 
-  // selectedTimeが変更されたときにAPIリクエストを行う
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const [hour, minute] = selectedTime.slice(0, -1).split(":");
+        const datetimeAfter = `${DATE}${hour}:${minute}:00`;
+
+        const newMinute = parseInt(minute) + 4;
+        const formattedMinute = newMinute.toString().padStart(2, "0");
+
+        const datetimeBefore = `${DATE}${hour}:${formattedMinute}:59`;
+
         const response = await axios.get(
-          `http://192.168.231.171:8000/api/data/?datetime_after=2024-09-06T23:00:00&datetime_before=2024-09-06T23:04:59`
+          `${API_BASE_URL}/api/data/?datetime_after=${datetimeAfter}&datetime_before=${datetimeBefore}`
         );
-        setGroupData(response.data); // APIレスポンスをstateにセット
+        setGroupData(response.data);
+        setErrorMessage(null);
+        console.log("API Response:", response.data);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        if ((error as any).response && (error as any).response.status === 404) {
+          setErrorMessage("一致する検索結果がありません");
+        } else {
+          console.error("Error fetching data:", error);
+        }
       }
     };
 
     fetchData();
-  }, [selectedTime]); // selectedTimeが変わるたびにAPIリクエストを行う
+  }, [selectedTime]);
 
   return (
     <div className="flex flex-col h-screen">
@@ -78,26 +108,29 @@ const App: React.FC = () => {
               value={selectedTime}
               onChange={(e) => setSelectedTime(e.target.value)}
             >
-              <option value="13:20">13:20</option>
-              <option value="13:25">13:25</option>
-              <option value="13:30">13:30</option>
-              <option value="13:35">13:35</option>
-              <option value="13:40">13:40</option>
+              {generateTimeOptions().map((time) => (
+                <option key={time} value={time}>
+                  {time}
+                </option>
+              ))}
             </select>
           </div>
           <GroupList
             onGroupClick={handleGroupClick}
             displayMode={displayMode}
             selectedTime={selectedTime}
-            groupData={groupData} // APIからのデータを渡す
+            groupData={groupData}
           />
+          {errorMessage && (
+            <div className="text-black-500 mb-2">{errorMessage}</div>
+          )}
         </div>
         <div className="flex-1 p-4 overflow-y-auto border rounded-r-md border-[rgba(36,141,116,1)] mt-4 mr-2 group-detail">
           <GroupDetail groupName={selectedGroup} displayMode={displayMode} />
         </div>
       </div>
       <div className="p-4">
-        <DataDisplay /> {/* DataDisplayコンポーネントを追加 */}
+        <DataDisplay />
       </div>
     </div>
   );
