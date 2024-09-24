@@ -1,12 +1,33 @@
 import React from "react";
 import { GroupListProps } from "../types";
 
+// group_idとGroup名の対応マップ
+const groupIdToNameMap: { [key: string]: string } = {
+  a: "Group A",
+  b: "Group B",
+  c: "Group C",
+  d: "Group D",
+  e: "Group E",
+  f: "Group F",
+};
+
 const GroupList: React.FC<GroupListProps> = ({
   onGroupClick,
   displayMode,
   selectedTime,
-  groupData, // 新たに追加したプロパティ
+  groupData,
+  previousGroupData,
 }) => {
+  // group_idを昇順にソート
+  const sortedGroupData = [...groupData].sort((a, b) =>
+    a.group_id.localeCompare(b.group_id)
+  );
+
+  // 変化量を計算する関数
+  const calculateChange = (currentValue: number, previousValue: number) => {
+    return currentValue - previousValue;
+  };
+
   return (
     <div>
       <ul>
@@ -15,48 +36,67 @@ const GroupList: React.FC<GroupListProps> = ({
           <span>{displayMode === "発話回数" ? "発話回数" : "感情スコア"}</span>
           <span>変化量</span>
         </li>
-        {/* APIから取得したグループデータのリスト */}
-        {groupData.map((group, index) => (
-          <li
-            key={index}
-            className="flex items-center justify-between py-2 px-4 -mx-4 border-2 border-gray-50 bg-white cursor-pointer hover:bg-gray-100 font-bold"
-            style={{ minHeight: "60px" }}
-            onClick={() => onGroupClick(group.group_id)}
-          >
-            <span className="text-lg ml-4">
-              Group {group.group_id.toUpperCase()}
-            </span>
-            {displayMode === "発話回数" ? (
-              <>
-                <span>{group.utterance_count}回</span>
-                <span
-                  className={`ml-2 ${
-                    group.utterance_count >= 0
-                      ? "text-green-500 mr-6"
-                      : "text-red-500 mr-6"
-                  }`}
-                >
-                  {/* 仮の変化量を表示 */}
-                  +0 {/* 必要に応じて実際の変化量のデータを追加 */}
-                </span>
-              </>
-            ) : (
-              <>
-                <span>{group.sentiment_value.toFixed(1)}</span>
-                <span
-                  className={`ml-2 ${
-                    group.sentiment_value >= 0
-                      ? "text-green-500 mr-6"
-                      : "text-red-500 mr-6"
-                  }`}
-                >
-                  {/* 仮の感情スコアの変化量を表示 */}
-                  +0 {/* 必要に応じて実際の変化量のデータを追加 */}
-                </span>
-              </>
-            )}
-          </li>
-        ))}
+        {/* ソートされたグループデータのリスト */}
+        {sortedGroupData.map((group, index) => {
+          const previousGroup = previousGroupData.find(
+            (prevGroup) => prevGroup.group_id === group.group_id
+          );
+          const change =
+            displayMode === "発話回数"
+              ? calculateChange(
+                  group.utterance_count,
+                  previousGroup ? previousGroup.utterance_count : 0
+                )
+              : calculateChange(
+                  group.sentiment_value,
+                  previousGroup ? previousGroup.sentiment_value : 0
+                );
+
+          return (
+            <li
+              key={index}
+              className="flex items-center justify-between py-2 px-4 -mx-4 border-2 border-gray-50 bg-white cursor-pointer hover:bg-gray-100 font-bold"
+              style={{ minHeight: "60px" }}
+              onClick={() => onGroupClick(group.group_id)}
+            >
+              <span className="text-lg ml-4">
+                {groupIdToNameMap[group.group_id]}{" "}
+                {/* group_idをグループ名に変換 */}
+              </span>
+              {displayMode === "発話回数" ? (
+                <>
+                  <span>{group.utterance_count}回</span>
+                  <span
+                    className={`ml-2 ${
+                      change > 0
+                        ? "text-green-500 mr-6"
+                        : change < 0
+                        ? "text-red-500 mr-6"
+                        : "text-gray-500 mr-6"
+                    }`}
+                  >
+                    {change > 0 ? `+${change}` : change}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span>{group.sentiment_value.toFixed(1)}</span>
+                  <span
+                    className={`ml-2 ${
+                      change > 0
+                        ? "text-green-500 mr-6"
+                        : change < 0
+                        ? "text-red-500 mr-6"
+                        : "text-gray-500 mr-6"
+                    }`}
+                  >
+                    {change > 0 ? `+${change.toFixed(1)}` : change.toFixed(1)}
+                  </span>
+                </>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
