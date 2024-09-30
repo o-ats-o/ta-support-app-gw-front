@@ -1,23 +1,40 @@
 import React, { useState, useEffect } from "react";
-import { GroupDetailProps, groupDetailData } from "../types";
+import { GroupDetailProps } from "../types";
 import TimeTransitionGraph from "./TimeTransitionGraph";
 import { groupIdToNameMap } from "../utils/groupMappings";
 
 const GroupDetail: React.FC<GroupDetailProps> = ({
   groupName,
   displayMode,
+  groupData,
   previousGroupData,
+  timeLabels,
 }) => {
   const [graphMode, setGraphMode] = useState(displayMode);
-  const [visibleGroups, setVisibleGroups] = useState([groupName]);
-  const [selectedGroup, setSelectedGroup] = useState<string>(groupName);
+  const [dataValues, setDataValues] = useState<number[]>([]);
 
   useEffect(() => {
-    if (groupName) {
-      setVisibleGroups([groupName]);
-      setSelectedGroup(groupName);
+    const allGroupData = [...previousGroupData.slice().reverse(), groupData];
+
+    const values: number[] = [];
+
+    for (const groupDataAtTime of allGroupData) {
+      const group = groupDataAtTime.find((g) => g.group_id === groupName);
+
+      let value = 0;
+
+      if (group) {
+        value =
+          displayMode === "発話回数"
+            ? group.utterance_count
+            : group.sentiment_value;
+      }
+
+      values.push(value);
     }
-  }, [groupName]);
+
+    setDataValues(values);
+  }, [groupName, displayMode, groupData, previousGroupData]);
 
   const getGroupColor = (name: string) => {
     const colors = [
@@ -35,14 +52,12 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
     return colors[Math.abs(hash) % colors.length];
   };
 
-  const showAllGroups = () => {
-    setVisibleGroups(Object.keys(groupDetailData));
-  };
+  const groupColor = getGroupColor(groupName);
 
   return (
     <div>
       <h2 className="text-xl font-bold mb-2 underline text-[rgba(36,141,116,1)]">
-        {groupIdToNameMap[selectedGroup]}
+        {groupIdToNameMap[groupName]}
       </h2>
       <div className="mb-4">
         <h3 className="text-lg mb-1 font-bold text-[rgba(36,141,116,1)]">
@@ -87,18 +102,12 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
               </span>
             </button>
           </div>
-          <div className="flex justify-end mb-4">
-            <button
-              onClick={showAllGroups}
-              className="px-5 py-1 bg-[rgba(36,141,116,1)] text-white rounded hover:bg-[rgba(36,141,116,0.8)]"
-            >
-              all
-            </button>
-          </div>
           <TimeTransitionGraph
             graphMode={graphMode}
-            visibleGroups={visibleGroups}
-            getGroupColor={getGroupColor}
+            dataValues={dataValues}
+            timeLabels={timeLabels}
+            groupName={groupName}
+            groupColor={groupColor}
           />
         </div>
       </div>

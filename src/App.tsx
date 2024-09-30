@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import GroupList from "./components/GroupList";
 import GroupDetail from "./components/GroupDetail";
 import Header from "./components/Header";
-import DataDisplay from "./components/DataDisplay";
 import axios from "axios";
 import { API_BASE_URL, DATE } from "./config";
 
@@ -29,6 +28,7 @@ const App: React.FC = () => {
   const [groupData, setGroupData] = useState<any[]>([]); // 初期値を空の配列に設定
   const [previousGroupData, setPreviousGroupData] = useState<any[][]>([]); // 初期値を空の配列に設定
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [timeLabels, setTimeLabels] = useState<string[]>([]);
 
   const handleGroupClick = (group: string) => {
     setSelectedGroup(group);
@@ -37,6 +37,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const times: string[] = [];
         const [hour, minute] = selectedTime.slice(0, -1).split(":");
         const datetimeAfter = `${DATE}${hour}:${minute}:00`;
 
@@ -44,6 +45,9 @@ const App: React.FC = () => {
         const formattedMinute = newMinute.toString().padStart(2, "0");
 
         const datetimeBefore = `${DATE}${hour}:${formattedMinute}:59`;
+
+        // 現在の時間ラベルを追加
+        times.push(`${hour}:${minute}`);
 
         const response = await axios.get(
           `${API_BASE_URL}/api/data/?datetime_after=${datetimeAfter}&datetime_before=${datetimeBefore}`
@@ -64,7 +68,8 @@ const App: React.FC = () => {
           }
 
           if (previousHour < 0) {
-            previousDataPromises.push(Promise.resolve([])); // 無効な場合は空の配列を設定
+            times.push("無効な時間");
+            previousDataPromises.push(Promise.resolve([]));
             continue;
           }
 
@@ -81,6 +86,9 @@ const App: React.FC = () => {
             .toString()
             .padStart(2, "0")}:59`;
 
+          // 時間ラベルを追加
+          times.push(`${formattedPreviousHour}:${formattedPreviousMinute}`);
+
           previousDataPromises.push(
             axios
               .get(
@@ -88,7 +96,10 @@ const App: React.FC = () => {
               )
               .then((res) => res.data)
               .catch((error) => {
-                console.error("Error fetching previous data:", error);
+                console.error(
+                  "過去のデータ取得中にエラーが発生しました:",
+                  error
+                );
                 return [];
               })
           );
@@ -96,12 +107,16 @@ const App: React.FC = () => {
 
         const previousDataResults = await Promise.all(previousDataPromises);
         setPreviousGroupData(previousDataResults);
+
+        // 時間ラベルを古い順に並べ替え
+        setTimeLabels(times.reverse());
+
         console.log("Previous API Responses:", previousDataResults);
       } catch (error) {
         if ((error as any).response && (error as any).response.status === 404) {
           setErrorMessage("一致する検索結果がありません");
         } else {
-          console.error("Error fetching data:", error);
+          console.error("データ取得中にエラーが発生しました:", error);
         }
       }
     };
@@ -185,12 +200,11 @@ const App: React.FC = () => {
           <GroupDetail
             groupName={selectedGroup}
             displayMode={displayMode}
+            groupData={groupData}
             previousGroupData={previousGroupData}
+            timeLabels={timeLabels}
           />
         </div>
-      </div>
-      <div className="p-4">
-        <DataDisplay />
       </div>
     </div>
   );
