@@ -6,7 +6,6 @@ import DataDisplay from "./components/DataDisplay";
 import axios from "axios";
 import { API_BASE_URL, DATE } from "./config";
 
-// 取得する時間を変更したい時はここを変更
 const generateTimeOptions = () => {
   const times = [];
   for (let hour = 9; hour <= 12; hour++) {
@@ -20,14 +19,15 @@ const generateTimeOptions = () => {
   }
   return times;
 };
+
 const App: React.FC = () => {
   const [selectedGroup, setSelectedGroup] = useState("Group A");
   const [displayMode, setDisplayMode] = useState("発話回数");
   const [selectedTime, setSelectedTime] = useState(
     localStorage.getItem("selectedTime") || "09:00〜"
   );
-  const [groupData, setGroupData] = useState<any[]>([]);
-  const [previousGroupData, setPreviousGroupData] = useState<any[]>([]);
+  const [groupData, setGroupData] = useState<any[]>([]); // 初期値を空の配列に設定
+  const [previousGroupData, setPreviousGroupData] = useState<any[][]>([]); // 初期値を空の配列に設定
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleGroupClick = (group: string) => {
@@ -52,41 +52,51 @@ const App: React.FC = () => {
         setErrorMessage(null);
         console.log("API Response:", response.data);
 
-        // 一個前の時間のデータを取得
-        let previousMinute = parseInt(minute) - 5;
-        let previousHour = parseInt(hour);
+        // 4個前の時間のデータを取得
+        const previousDataPromises = [];
+        for (let i = 1; i <= 4; i++) {
+          let previousMinute = parseInt(minute) - 5 * i;
+          let previousHour = parseInt(hour);
 
-        if (previousMinute < 0) {
-          previousMinute += 60;
-          previousHour -= 1;
-        }
+          if (previousMinute < 0) {
+            previousMinute += 60;
+            previousHour -= 1;
+          }
 
-        if (previousHour < 0) {
-          setPreviousGroupData([]); // 一個前のデータが無効な場合は空の配列を設定
-          return;
-        }
+          if (previousHour < 0) {
+            previousDataPromises.push(Promise.resolve([])); // 無効な場合は空の配列を設定
+            continue;
+          }
 
-        const formattedPreviousMinute = previousMinute
-          .toString()
-          .padStart(2, "0");
-        const formattedPreviousHour = previousHour.toString().padStart(2, "0");
-        const previousDatetimeAfter = `${DATE}${formattedPreviousHour}:${formattedPreviousMinute}:00`;
-        const previousDatetimeBefore = `${DATE}${formattedPreviousHour}:${(
-          previousMinute + 4
-        )
-          .toString()
-          .padStart(2, "0")}:59`;
+          const formattedPreviousMinute = previousMinute
+            .toString()
+            .padStart(2, "0");
+          const formattedPreviousHour = previousHour
+            .toString()
+            .padStart(2, "0");
+          const previousDatetimeAfter = `${DATE}${formattedPreviousHour}:${formattedPreviousMinute}:00`;
+          const previousDatetimeBefore = `${DATE}${formattedPreviousHour}:${(
+            previousMinute + 4
+          )
+            .toString()
+            .padStart(2, "0")}:59`;
 
-        try {
-          const previousResponse = await axios.get(
-            `${API_BASE_URL}/api/data/?datetime_after=${previousDatetimeAfter}&datetime_before=${previousDatetimeBefore}`
+          previousDataPromises.push(
+            axios
+              .get(
+                `${API_BASE_URL}/api/data/?datetime_after=${previousDatetimeAfter}&datetime_before=${previousDatetimeBefore}`
+              )
+              .then((res) => res.data)
+              .catch((error) => {
+                console.error("Error fetching previous data:", error);
+                return [];
+              })
           );
-          setPreviousGroupData(previousResponse.data);
-          console.log("Previous API Response:", previousResponse.data);
-        } catch (error) {
-          setPreviousGroupData([]); // 一個前のデータが取得できなかった場合は空の配列を設定
-          console.error("Error fetching previous data:", error);
         }
+
+        const previousDataResults = await Promise.all(previousDataPromises);
+        setPreviousGroupData(previousDataResults);
+        console.log("Previous API Responses:", previousDataResults);
       } catch (error) {
         if ((error as any).response && (error as any).response.status === 404) {
           setErrorMessage("一致する検索結果がありません");
@@ -167,12 +177,16 @@ const App: React.FC = () => {
               displayMode={displayMode}
               selectedTime={selectedTime}
               groupData={groupData}
-              previousGroupData={previousGroupData}
+              previousGroupData={previousGroupData[0]} // 最新の前のデータを渡す
             />
           )}
         </div>
         <div className="flex-1 p-4 overflow-y-auto border rounded-r-md border-[rgba(36,141,116,1)] mt-4 mr-2 group-detail">
-          <GroupDetail groupName={selectedGroup} displayMode={displayMode} />
+          <GroupDetail
+            groupName={selectedGroup}
+            displayMode={displayMode}
+            previousGroupData={previousGroupData}
+          />
         </div>
       </div>
       <div className="p-4">

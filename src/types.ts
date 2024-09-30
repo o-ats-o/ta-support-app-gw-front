@@ -29,6 +29,7 @@ export interface GroupListProps {
 export interface GroupDetailProps {
   groupName: string;
   displayMode: string;
+  previousGroupData: GroupData[][]; // 4個前までのデータの型
 }
 
 export interface TimeTransitionGraphProps {

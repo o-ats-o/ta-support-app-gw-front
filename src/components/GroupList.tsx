@@ -1,15 +1,6 @@
 import React from "react";
 import { GroupListProps } from "../types";
-
-// group_idとGroup名の対応マップ
-const groupIdToNameMap: { [key: string]: string } = {
-  a: "Group A",
-  b: "Group B",
-  c: "Group C",
-  d: "Group D",
-  e: "Group E",
-  f: "Group F",
-};
+import { groupIdToNameMap } from "../utils/groupMappings";
 
 const GroupList: React.FC<GroupListProps> = ({
   onGroupClick,
@@ -38,9 +29,11 @@ const GroupList: React.FC<GroupListProps> = ({
         </li>
         {/* ソートされたグループデータのリスト */}
         {sortedGroupData.map((group, index) => {
-          const previousGroup = previousGroupData.find(
-            (prevGroup) => prevGroup.group_id === group.group_id
-          );
+          const previousGroup = previousGroupData
+            ? previousGroupData.find(
+                (prevGroup) => prevGroup.group_id === group.group_id
+              )
+            : null;
           const change =
             displayMode === "発話回数"
               ? calculateChange(

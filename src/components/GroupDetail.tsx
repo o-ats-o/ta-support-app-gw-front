@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { GroupDetailProps, groupDetailData } from "../types";
 import TimeTransitionGraph from "./TimeTransitionGraph";
+import { groupIdToNameMap } from "../utils/groupMappings";
 
 const GroupDetail: React.FC<GroupDetailProps> = ({
   groupName,
   displayMode,
+  previousGroupData,
 }) => {
   const [graphMode, setGraphMode] = useState(displayMode);
   const [visibleGroups, setVisibleGroups] = useState([groupName]);
@@ -17,7 +19,6 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
     }
   }, [groupName]);
 
-  // グループ名に基づいて色を返す関数
   const getGroupColor = (name: string) => {
     const colors = [
       "#FF6384",
@@ -34,7 +35,6 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
     return colors[Math.abs(hash) % colors.length];
   };
 
-  // 「all」ボタンのイベントハンドラー
   const showAllGroups = () => {
     setVisibleGroups(Object.keys(groupDetailData));
   };
@@ -42,7 +42,7 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
   return (
     <div>
       <h2 className="text-xl font-bold mb-2 underline text-[rgba(36,141,116,1)]">
-        {selectedGroup}
+        {groupIdToNameMap[selectedGroup]}
       </h2>
       <div className="mb-4">
         <h3 className="text-lg mb-1 font-bold text-[rgba(36,141,116,1)]">
@@ -110,8 +110,16 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
           className="border p-2 overflow-y-auto"
           style={{ minHeight: "15em", maxHeight: "15em" }}
         >
-          {groupDetailData[selectedGroup]?.history.map((entry, index) => (
-            <p key={index}>{entry}</p>
+          {previousGroupData.map((data, index) => (
+            <div key={index}>
+              <h4>時間: {index + 1}個前</h4>
+              {data.map((entry, i) => (
+                <p key={i}>
+                  {entry.group_id}: {entry.utterance_count}回,{" "}
+                  {entry.sentiment_value}
+                </p>
+              ))}
+            </div>
           ))}
         </div>
       </div>
@@ -123,7 +131,7 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
           className="border p-2 overflow-y-auto"
           style={{ minHeight: "15em", maxHeight: "15em" }}
         >
-          <p>{groupDetailData[selectedGroup]?.scenario}</p>
+          <p>仮のシナリオテキスト</p>
         </div>
       </div>
     </div>
