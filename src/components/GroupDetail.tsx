@@ -11,30 +11,36 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
   timeLabels,
 }) => {
   const [graphMode, setGraphMode] = useState(displayMode);
-  const [dataValues, setDataValues] = useState<number[]>([]);
+  const [dataValues, setDataValues] = useState<{ [key: string]: number[] }>({});
 
   useEffect(() => {
     const allGroupData = [...previousGroupData.slice().reverse(), groupData];
 
-    const values: number[] = [];
+    const newDataValues: { [key: string]: number[] } = {};
 
-    for (const groupDataAtTime of allGroupData) {
-      const group = groupDataAtTime.find((g) => g.group_id === groupName);
+    for (const group in groupIdToNameMap) {
+      const values: number[] = [];
 
-      let value = 0;
+      for (const groupDataAtTime of allGroupData) {
+        const groupEntry = groupDataAtTime.find((g) => g.group_id === group);
 
-      if (group) {
-        value =
-          displayMode === "発話回数"
-            ? group.utterance_count
-            : group.sentiment_value;
+        let value = 0;
+
+        if (groupEntry) {
+          value =
+            displayMode === "発話回数"
+              ? groupEntry.utterance_count
+              : groupEntry.sentiment_value;
+        }
+
+        values.push(value);
       }
 
-      values.push(value);
+      newDataValues[group] = values;
     }
 
-    setDataValues(values);
-  }, [groupName, displayMode, groupData, previousGroupData]);
+    setDataValues(newDataValues);
+  }, [displayMode, groupData, previousGroupData]);
 
   const getGroupColor = (name: string) => {
     const colors = [
@@ -51,8 +57,6 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
     }
     return colors[Math.abs(hash) % colors.length];
   };
-
-  const groupColor = getGroupColor(groupName);
 
   return (
     <div>
@@ -106,8 +110,8 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
             graphMode={graphMode}
             dataValues={dataValues}
             timeLabels={timeLabels}
-            groupName={groupName}
-            groupColor={groupColor}
+            selectedGroup={groupName}
+            getGroupColor={getGroupColor}
           />
         </div>
       </div>

@@ -36,8 +36,8 @@ export interface GroupDetailProps {
 
 export interface TimeTransitionGraphProps {
   graphMode: string;
-  dataValues: number[];
+  dataValues: { [key: string]: number[] };
   timeLabels: string[];
-  groupName: string;
-  groupColor: string;
+  selectedGroup: string;
+  getGroupColor: (name: string) => string;
 }
