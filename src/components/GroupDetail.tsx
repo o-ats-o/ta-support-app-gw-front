@@ -8,6 +8,7 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
   groupData,
   previousGroupData,
   timeLabels,
+  errorMessage,
 }) => {
   const [graphMode, setGraphMode] = useState<string>("発話回数");
   const [dataValues, setDataValues] = useState<{ [key: string]: number[] }>({});
@@ -63,6 +64,22 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
     }
     return colors[Math.abs(hash) % colors.length];
   };
+
+  const allGroupData = previousGroupData
+    ? [...previousGroupData.slice().reverse(), groupData]
+    : [groupData];
+
+  if (errorMessage) {
+    return (
+      <div className="flex justify-center items-center h-full p-32">
+        <img
+          src="./errorImage.png"
+          alt="Error"
+          style={{ width: "120px", height: "120px" }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -129,18 +146,25 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
           className="border p-2 overflow-y-auto"
           style={{ minHeight: "15em", maxHeight: "15em" }}
         >
-          {previousGroupData &&
-            previousGroupData.map((data, index) => (
-              <div key={index}>
-                <h4>時間: {index + 1}個前</h4>
-                {data.map((entry, i) => (
-                  <p key={i}>
-                    {entry.group_id}: {entry.utterance_count}回,{" "}
-                    {entry.sentiment_value}
-                  </p>
-                ))}
+          {allGroupData.map((data, index) => {
+            const timeLabel = timeLabels[index];
+            const groupEntry = data.find(
+              (entry) => entry.group_id === groupName
+            );
+
+            return (
+              <div key={index} className="mb-4">
+                <h4 className="font-bold">{timeLabel}</h4>
+                {groupEntry && groupEntry.transcript_diarize ? (
+                  <div style={{ whiteSpace: "pre-wrap" }}>
+                    {groupEntry.transcript_diarize}
+                  </div>
+                ) : (
+                  <p>会話がありません</p>
+                )}
               </div>
-            ))}
+            );
+          })}
         </div>
       </div>
       <div className="mb-4">
@@ -151,7 +175,7 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
           className="border p-2 overflow-y-auto"
           style={{ minHeight: "15em", maxHeight: "15em" }}
         >
-          <p>仮のシナリオテキスト</p>
+          <p>現在開発中です</p>
         </div>
       </div>
     </div>

@@ -204,6 +204,7 @@ const App: React.FC = () => {
             groupData={groupData}
             previousGroupData={previousGroupData}
             timeLabels={timeLabels}
+            errorMessage={errorMessage}
           />
         </div>
       </div>

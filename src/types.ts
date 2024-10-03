@@ -2,6 +2,7 @@ export interface GroupData {
   group_id: string;
   utterance_count: number;
   sentiment_value: number;
+  transcript_diarize: string;
 }
 
 export interface Group {
@@ -24,6 +25,7 @@ export interface GroupDetailProps {
   groupData: GroupData[];
   previousGroupData: GroupData[][];
   timeLabels: string[];
+  errorMessage?: string | null;
 }
 
 export interface TimeTransitionGraphProps {
