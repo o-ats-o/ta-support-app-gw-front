@@ -20,7 +20,7 @@ const generateTimeOptions = () => {
 };
 
 const App: React.FC = () => {
-  const [selectedGroup, setSelectedGroup] = useState("Group A");
+  const [selectedGroup, setSelectedGroup] = useState("a");
   const [displayMode, setDisplayMode] = useState("発話回数");
   const [selectedTime, setSelectedTime] = useState(
     localStorage.getItem("selectedTime") || "09:00〜"
@@ -199,7 +199,6 @@ const App: React.FC = () => {
         <div className="flex-1 p-4 overflow-y-auto border rounded-r-md border-[rgba(36,141,116,1)] mt-4 mr-2 group-detail">
           <GroupDetail
             groupName={selectedGroup}
-            displayMode={displayMode}
             groupData={groupData}
             previousGroupData={previousGroupData}
             timeLabels={timeLabels}

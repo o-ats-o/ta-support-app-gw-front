@@ -5,16 +5,18 @@ import { groupIdToNameMap } from "../utils/groupMappings";
 
 const GroupDetail: React.FC<GroupDetailProps> = ({
   groupName,
-  displayMode,
   groupData,
   previousGroupData,
   timeLabels,
 }) => {
-  const [graphMode, setGraphMode] = useState(displayMode);
+  const [graphMode, setGraphMode] = useState<string>("発話回数");
   const [dataValues, setDataValues] = useState<{ [key: string]: number[] }>({});
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([groupName]);
 
   useEffect(() => {
-    const allGroupData = [...previousGroupData.slice().reverse(), groupData];
+    const allGroupData = previousGroupData
+      ? [...previousGroupData.slice().reverse(), groupData]
+      : [groupData];
 
     const newDataValues: { [key: string]: number[] } = {};
 
@@ -28,7 +30,7 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
 
         if (groupEntry) {
           value =
-            displayMode === "発話回数"
+            graphMode === "発話回数"
               ? groupEntry.utterance_count
               : groupEntry.sentiment_value;
         }
@@ -40,16 +42,20 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
     }
 
     setDataValues(newDataValues);
-  }, [displayMode, groupData, previousGroupData]);
+  }, [graphMode, groupData, previousGroupData]);
+
+  useEffect(() => {
+    setSelectedGroups([groupName]);
+  }, [groupName]);
 
   const getGroupColor = (name: string) => {
     const colors = [
-      "#FF6384",
-      "#36A2EB",
-      "#FFCE56",
-      "#cc65fe",
-      "#248D74",
-      "#ffcd56",
+      "#845ec2",
+      "#ff6f91",
+      "#ffc75f",
+      "#f9f871",
+      "#008f7a",
+      "#2c73d2",
     ];
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
@@ -110,7 +116,7 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
             graphMode={graphMode}
             dataValues={dataValues}
             timeLabels={timeLabels}
-            selectedGroup={groupName}
+            selectedGroups={selectedGroups}
             getGroupColor={getGroupColor}
           />
         </div>
@@ -123,17 +129,18 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
           className="border p-2 overflow-y-auto"
           style={{ minHeight: "15em", maxHeight: "15em" }}
         >
-          {previousGroupData.map((data, index) => (
-            <div key={index}>
-              <h4>時間: {index + 1}個前</h4>
-              {data.map((entry, i) => (
-                <p key={i}>
-                  {entry.group_id}: {entry.utterance_count}回,{" "}
-                  {entry.sentiment_value}
-                </p>
-              ))}
-            </div>
-          ))}
+          {previousGroupData &&
+            previousGroupData.map((data, index) => (
+              <div key={index}>
+                <h4>時間: {index + 1}個前</h4>
+                {data.map((entry, i) => (
+                  <p key={i}>
+                    {entry.group_id}: {entry.utterance_count}回,{" "}
+                    {entry.sentiment_value}
+                  </p>
+                ))}
+              </div>
+            ))}
         </div>
       </div>
       <div className="mb-4">

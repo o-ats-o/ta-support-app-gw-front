@@ -11,13 +11,6 @@ export interface Group {
   };
 }
 
-export interface GroupDetails {
-  data: number[];
-  emotion: number[];
-  history: string[];
-  scenario: string;
-}
-
 export interface GroupListProps {
   onGroupClick: (group: string) => void;
   displayMode: string;
@@ -28,7 +21,6 @@ export interface GroupListProps {
 
 export interface GroupDetailProps {
   groupName: string;
-  displayMode: string;
   groupData: GroupData[];
   previousGroupData: GroupData[][];
   timeLabels: string[];
@@ -38,6 +30,6 @@ export interface TimeTransitionGraphProps {
   graphMode: string;
   dataValues: { [key: string]: number[] };
   timeLabels: string[];
-  selectedGroup: string;
+  selectedGroups: string[];
   getGroupColor: (name: string) => string;
 }

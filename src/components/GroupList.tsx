@@ -73,7 +73,7 @@ const GroupList: React.FC<GroupListProps> = ({
                 </>
               ) : (
                 <>
-                  <span>{group.sentiment_value.toFixed(1)}</span>
+                  <span>{group.sentiment_value.toFixed(2)}</span>
                   <span
                     className={`ml-2 ${
                       change > 0
@@ -83,7 +83,7 @@ const GroupList: React.FC<GroupListProps> = ({
                         : "text-gray-500 mr-6"
                     }`}
                   >
-                    {change > 0 ? `+${change.toFixed(1)}` : change.toFixed(1)}
+                    {change > 0 ? `+${change.toFixed(2)}` : change.toFixed(2)}
                   </span>
                 </>
               )}
