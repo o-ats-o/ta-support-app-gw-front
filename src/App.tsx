@@ -185,7 +185,9 @@ const App: React.FC = () => {
             </select>
           </div>
           {errorMessage ? (
-            <div className="text-black-500 mb-2">{errorMessage}</div>
+            <div className="flex justify-center items-center text-black-500 font-bold h-full pb-32">
+              {errorMessage}
+            </div>
           ) : (
             <GroupList
               onGroupClick={handleGroupClick}
