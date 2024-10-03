@@ -13,6 +13,7 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
   const [graphMode, setGraphMode] = useState<string>("発話回数");
   const [dataValues, setDataValues] = useState<{ [key: string]: number[] }>({});
   const [selectedGroups, setSelectedGroups] = useState<string[]>([groupName]);
+  const [showAllGroups, setShowAllGroups] = useState<boolean>(false);
 
   useEffect(() => {
     const allGroupData = previousGroupData
@@ -23,22 +24,17 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
 
     for (const group in groupIdToNameMap) {
       const values: number[] = [];
-
       for (const groupDataAtTime of allGroupData) {
         const groupEntry = groupDataAtTime.find((g) => g.group_id === group);
-
         let value = 0;
-
         if (groupEntry) {
           value =
             graphMode === "発話回数"
               ? groupEntry.utterance_count
               : groupEntry.sentiment_value;
         }
-
         values.push(value);
       }
-
       newDataValues[group] = values;
     }
 
@@ -46,8 +42,14 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
   }, [graphMode, groupData, previousGroupData]);
 
   useEffect(() => {
-    setSelectedGroups([groupName]);
-  }, [groupName]);
+    if (showAllGroups) {
+      // 全グループを選択
+      setSelectedGroups(Object.keys(groupIdToNameMap));
+    } else {
+      // 選択されたグループのみを表示
+      setSelectedGroups([groupName]);
+    }
+  }, [groupName, showAllGroups]);
 
   const getGroupColor = (name: string) => {
     const colors = [
@@ -127,6 +129,14 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
               >
                 感情
               </span>
+            </button>
+          </div>
+          <div className="flex justify-end mr-4">
+            <button
+              onClick={() => setShowAllGroups(!showAllGroups)}
+              className="mb-4 px-2 py-1.5 bg-[rgba(36,141,116,1)] text-white rounded"
+            >
+              {showAllGroups ? "選択グループ" : "全グループ"}
             </button>
           </div>
           <TimeTransitionGraph
