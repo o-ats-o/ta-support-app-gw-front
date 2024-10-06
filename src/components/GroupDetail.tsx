@@ -59,6 +59,8 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
       "#f9f871",
       "#008f7a",
       "#2c73d2",
+      "#cf5a32",
+      "#2effdc",
     ];
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
