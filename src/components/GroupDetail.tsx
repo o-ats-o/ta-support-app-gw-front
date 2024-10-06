@@ -136,7 +136,7 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
               onClick={() => setShowAllGroups(!showAllGroups)}
               className="mb-4 px-2 py-1.5 bg-[rgba(36,141,116,1)] text-white rounded"
             >
-              {showAllGroups ? "選択グループ" : "全グループ"}
+              {showAllGroups ? "選択グループを表示" : "全グループを表示"}
             </button>
           </div>
           <TimeTransitionGraph

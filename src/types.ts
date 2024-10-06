@@ -2,7 +2,7 @@ export interface GroupData {
   group_id: string;
   utterance_count: number;
   sentiment_value: number;
-  transcript_diarize: string;
+  transcript_diarize: string | null;
 }
 
 export interface Group {
