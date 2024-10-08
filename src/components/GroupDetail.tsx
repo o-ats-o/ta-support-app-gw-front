@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { GroupDetailProps } from "../types";
 import TimeTransitionGraph from "./TimeTransitionGraph";
 import { groupIdToNameMap } from "../utils/groupMappings";
+import TalkToScenario from "./TalkToScenario";
 
 const GroupDetail: React.FC<GroupDetailProps> = ({
   groupName,
@@ -84,6 +85,10 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
       </div>
     );
   }
+
+  // 選択されたグループの会話履歴を取得
+  const groupEntry = groupData.find((entry) => entry.group_id === groupName);
+  const transcript = groupEntry ? groupEntry.transcript_diarize : "";
 
   return (
     <div>
@@ -187,7 +192,7 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
           className="border p-2 overflow-y-auto"
           style={{ minHeight: "15em", maxHeight: "15em" }}
         >
-          <p>現在開発中です</p>
+          <TalkToScenario transcript={transcript || ""} />
         </div>
       </div>
     </div>

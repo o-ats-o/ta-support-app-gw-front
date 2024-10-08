@@ -35,3 +35,7 @@ export interface TimeTransitionGraphProps {
   selectedGroups: string[];
   getGroupColor: (name: string) => string;
 }
+
+export interface TalkToScenarioProps {
+  transcript: string;
+}
