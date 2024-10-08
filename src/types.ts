@@ -26,6 +26,8 @@ export interface GroupDetailProps {
   previousGroupData: GroupData[][];
   timeLabels: string[];
   errorMessage?: string | null;
+  scenario: string;
+  updateScenario: (groupName: string, scenario: string) => void;
 }
 
 export interface TimeTransitionGraphProps {

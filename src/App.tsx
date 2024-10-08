@@ -25,13 +25,25 @@ const App: React.FC = () => {
   const [selectedTime, setSelectedTime] = useState(
     localStorage.getItem("selectedTime") || "09:00〜"
   );
-  const [groupData, setGroupData] = useState<any[]>([]); // 初期値を空の配列に設定
-  const [previousGroupData, setPreviousGroupData] = useState<any[][]>([]); // 初期値を空の配列に設定
+  const [groupData, setGroupData] = useState<any[]>([]);
+  const [previousGroupData, setPreviousGroupData] = useState<any[][]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [timeLabels, setTimeLabels] = useState<string[]>([]);
+  const [scenarios, setScenarios] = useState<{ [groupName: string]: string }>(
+    {}
+  );
 
+  // グループをクリックしたときの処理
   const handleGroupClick = (group: string) => {
     setSelectedGroup(group);
+  };
+
+  // シナリオを更新する関数
+  const updateScenario = (groupName: string, scenario: string) => {
+    setScenarios((prevScenarios) => ({
+      ...prevScenarios,
+      [groupName]: scenario,
+    }));
   };
 
   useEffect(() => {
@@ -111,12 +123,11 @@ const App: React.FC = () => {
         // 時間ラベルを古い順に並べ替え
         setTimeLabels(times.reverse());
 
-        console.log("Previous API Responses:", previousDataResults);
+        // シナリオをリセット
+        setScenarios({});
       } catch (error) {
         if ((error as any).response && (error as any).response.status === 404) {
           setErrorMessage("一致する検索結果がありません");
-        } else {
-          console.error("データ取得中にエラーが発生しました:", error);
         }
       }
     };
@@ -205,6 +216,8 @@ const App: React.FC = () => {
             previousGroupData={previousGroupData}
             timeLabels={timeLabels}
             errorMessage={errorMessage}
+            scenario={scenarios[selectedGroup]}
+            updateScenario={updateScenario}
           />
         </div>
       </div>
