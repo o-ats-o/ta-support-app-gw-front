@@ -252,9 +252,9 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
           ) : error ? (
             <p>{error}</p>
           ) : scenario ? (
-            <div className="leading-9">
+            <article className="prose prose-neutral">
               <ReactMarkdown>{scenario}</ReactMarkdown>
-            </div>
+            </article>
           ) : (
             <p>シナリオがありません</p>
           )}
