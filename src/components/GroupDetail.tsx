@@ -4,6 +4,7 @@ import TimeTransitionGraph from "./TimeTransitionGraph";
 import { groupIdToNameMap } from "../utils/groupMappings";
 import { API_BASE_URL } from "../config";
 import axios from "axios";
+import ReactMarkdown from "react-markdown";
 
 const GroupDetail: React.FC<GroupDetailProps> = ({
   groupName,
@@ -17,16 +18,6 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
   // グラフ関連の状態
   const [graphMode, setGraphMode] = useState<string>("発話回数");
   const [dataValues, setDataValues] = useState<{ [key: string]: number[] }>({});
-  const [selectedGroups, setSelectedGroups] = useState<string[]>([groupName]);
-  const [showAllGroups, setShowAllGroups] = useState<boolean>(false);
-
-  // 選択されたグループの会話履歴を取得
-  const groupEntry = groupData.find((entry) => entry.group_id === groupName);
-  const transcript = groupEntry ? groupEntry.transcript_diarize : "";
-
-  // ローディングとエラーの状態をローカルで管理
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const allGroupData = previousGroupData
@@ -54,6 +45,9 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
     setDataValues(newDataValues);
   }, [graphMode, groupData, previousGroupData]);
 
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([groupName]);
+  const [showAllGroups, setShowAllGroups] = useState<boolean>(false);
+
   useEffect(() => {
     if (showAllGroups) {
       // 全グループを選択
@@ -63,6 +57,14 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
       setSelectedGroups([groupName]);
     }
   }, [groupName, showAllGroups]);
+
+  // 選択されたグループの会話履歴を取得
+  const groupEntry = groupData.find((entry) => entry.group_id === groupName);
+  const transcript = groupEntry ? groupEntry.transcript_diarize : "";
+
+  // ローディングとエラーの状態をローカルで管理
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchScenario = useCallback(async () => {
     if (!transcript) {
@@ -239,21 +241,20 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
         <div className="flex justify-end mb-2">
           <button
             onClick={handleRegenerateScenario}
-            className="px-2 py-1 bg-[rgba(36,141,116,1)] text-white rounded"
+            className="px-2 py-1.5 bg-[rgba(36,141,116,1)] text-white rounded"
           >
             再生成
           </button>
         </div>
-        <div
-          className="border p-2 overflow-y-auto"
-          style={{ minHeight: "15em", maxHeight: "15em" }}
-        >
+        <div className="border p-2 overflow-y-auto min-h-[15em] max-h-[15em]">
           {loading ? (
             <p>シナリオを生成しています...</p>
           ) : error ? (
             <p>{error}</p>
           ) : scenario ? (
-            <div style={{ whiteSpace: "pre-wrap" }}>{scenario}</div>
+            <div className="leading-9">
+              <ReactMarkdown>{scenario}</ReactMarkdown>
+            </div>
           ) : (
             <p>シナリオがありません</p>
           )}
