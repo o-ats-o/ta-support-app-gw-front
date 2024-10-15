@@ -38,16 +38,37 @@ const App: React.FC = () => {
     const fetchData = async () => {
       try {
         const times: string[] = [];
-        const [hour, minute] = selectedTime.slice(0, -1).split(":");
-        const datetimeAfter = `${DATE}${hour}:${minute}:00`;
+        const [hourStr, minuteStr] = selectedTime.slice(0, -1).split(":");
+        const hour = parseInt(hourStr);
+        const minute = parseInt(minuteStr);
 
-        const newMinute = parseInt(minute) + 4;
-        const formattedMinute = newMinute.toString().padStart(2, "0");
+        times.push(`${hourStr}:${minuteStr}`);
 
-        const datetimeBefore = `${DATE}${hour}:${formattedMinute}:59`;
+        // データ取得の開始時間を選択した時間から5分後に設定
+        let dataHour = hour;
+        let dataMinute = minute + 5;
 
-        // 現在の時間ラベルを追加
-        times.push(`${hour}:${minute}`);
+        if (dataMinute >= 60) {
+          dataMinute -= 60;
+          dataHour += 1;
+        }
+
+        const datetimeAfter = `${DATE}${dataHour
+          .toString()
+          .padStart(2, "0")}:${dataMinute.toString().padStart(2, "0")}:00`;
+
+        // データ取得の終了時間（開始時間から4分59秒後）
+        let endMinute = dataMinute + 4;
+        let endHour = dataHour;
+
+        if (endMinute >= 60) {
+          endMinute -= 60;
+          endHour += 1;
+        }
+
+        const datetimeBefore = `${DATE}${endHour
+          .toString()
+          .padStart(2, "0")}:${endMinute.toString().padStart(2, "0")}:59`;
 
         const response = await axios.get(
           `${API_BASE_URL}/api/data/?datetime_after=${datetimeAfter}&datetime_before=${datetimeBefore}`
@@ -56,38 +77,64 @@ const App: React.FC = () => {
         setErrorMessage(null);
         console.log("API Response:", response.data);
 
-        // 4個前の時間のデータを取得
+        // 過去のデータを取得
         const previousDataPromises = [];
         for (let i = 1; i <= 4; i++) {
-          let previousMinute = parseInt(minute) - 5 * i;
-          let previousHour = parseInt(hour);
+          let previousDataMinute = dataMinute - 5 * i;
+          let previousDataHour = dataHour;
 
-          if (previousMinute < 0) {
-            previousMinute += 60;
-            previousHour -= 1;
+          while (previousDataMinute < 0) {
+            previousDataMinute += 60;
+            previousDataHour -= 1;
           }
 
-          if (previousHour < 0) {
+          if (previousDataHour < 0) {
             times.push("無効な時間");
             previousDataPromises.push(Promise.resolve([]));
             continue;
           }
 
-          const formattedPreviousMinute = previousMinute
+          const formattedPreviousDataMinute = previousDataMinute
             .toString()
             .padStart(2, "0");
-          const formattedPreviousHour = previousHour
+          const formattedPreviousDataHour = previousDataHour
             .toString()
             .padStart(2, "0");
-          const previousDatetimeAfter = `${DATE}${formattedPreviousHour}:${formattedPreviousMinute}:00`;
-          const previousDatetimeBefore = `${DATE}${formattedPreviousHour}:${(
-            previousMinute + 4
-          )
+
+          const previousDatetimeAfter = `${DATE}${formattedPreviousDataHour}:${formattedPreviousDataMinute}:00`;
+
+          let endPreviousDataMinute = previousDataMinute + 4;
+          let endPreviousDataHour = previousDataHour;
+
+          if (endPreviousDataMinute >= 60) {
+            endPreviousDataMinute -= 60;
+            endPreviousDataHour += 1;
+          }
+
+          const previousDatetimeBefore = `${DATE}${endPreviousDataHour
+            .toString()
+            .padStart(2, "0")}:${endPreviousDataMinute
             .toString()
             .padStart(2, "0")}:59`;
 
-          // 時間ラベルを追加
-          times.push(`${formattedPreviousHour}:${formattedPreviousMinute}`);
+          // 時間ラベルは選択した時間から i * 5 分引いた時間を使用
+          let labelMinute = minute - 5 * i;
+          let labelHour = hour;
+
+          while (labelMinute < 0) {
+            labelMinute += 60;
+            labelHour -= 1;
+          }
+
+          if (labelHour < 0) {
+            times.push("無効な時間");
+          } else {
+            times.push(
+              `${labelHour.toString().padStart(2, "0")}:${labelMinute
+                .toString()
+                .padStart(2, "0")}`
+            );
+          }
 
           previousDataPromises.push(
             axios
