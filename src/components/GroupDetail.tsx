@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { GroupDetailProps } from "../types";
 import TimeTransitionGraph from "./TimeTransitionGraph";
 import { groupIdToNameMap } from "../utils/groupMappings";
@@ -19,11 +19,14 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
   const [graphMode, setGraphMode] = useState<string>("発話回数");
   const [dataValues, setDataValues] = useState<{ [key: string]: number[] }>({});
 
-  useEffect(() => {
-    const allGroupData = previousGroupData
+  // 選択されたグループの会話履歴を取得
+  const allGroupData = useMemo(() => {
+    return previousGroupData
       ? [...previousGroupData.slice().reverse(), groupData]
       : [groupData];
+  }, [previousGroupData, groupData]);
 
+  useEffect(() => {
     const newDataValues: { [key: string]: number[] } = {};
 
     for (const group in groupIdToNameMap) {
@@ -43,7 +46,7 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
     }
 
     setDataValues(newDataValues);
-  }, [graphMode, groupData, previousGroupData]);
+  }, [graphMode, allGroupData]);
 
   const [selectedGroups, setSelectedGroups] = useState<string[]>([groupName]);
   const [showAllGroups, setShowAllGroups] = useState<boolean>(false);
@@ -58,27 +61,38 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
     }
   }, [groupName, showAllGroups]);
 
-  // 選択されたグループの会話履歴を取得
-  const groupEntry = groupData.find((entry) => entry.group_id === groupName);
-  const transcript = groupEntry ? groupEntry.transcript_diarize : "";
-
   // ローディングとエラーの状態をローカルで管理
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchScenario = useCallback(async () => {
-    if (!transcript) {
+    // 全ての会話履歴を取得し、nullでないものをフィルタリング
+    const transcripts = allGroupData
+      .map((data) => {
+        const groupEntry = data.find((entry) => entry.group_id === groupName);
+        return groupEntry ? groupEntry.transcript_diarize : null;
+      })
+      .filter((transcript) => transcript);
+
+    // 会話履歴がない場合の処理
+    if (transcripts.length === 0) {
       updateScenario(groupName, "会話履歴がありません");
       return;
     }
+
+    // 会話履歴を結合
+    const combinedTranscript = transcripts.join("\n");
 
     try {
       setLoading(true);
       setError(null);
 
+      // 結合された会話履歴をコンソールに出力（デバッグ用）
+      console.log("結合された会話履歴:", combinedTranscript);
+
       const response = await axios.post(
         `${API_BASE_URL}/api/data/generate_scenario/`,
-        { transcript },
+        { transcript: combinedTranscript },
         {
           headers: {
             "Content-Type": "application/json",
@@ -93,7 +107,7 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [transcript, groupName, updateScenario]);
+  }, [allGroupData, groupName, updateScenario]);
 
   useEffect(() => {
     if (!scenario) {
@@ -123,10 +137,6 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
     }
     return colors[Math.abs(hash) % colors.length];
   };
-
-  const allGroupData = previousGroupData
-    ? [...previousGroupData.slice().reverse(), groupData]
-    : [groupData];
 
   if (errorMessage) {
     return (
