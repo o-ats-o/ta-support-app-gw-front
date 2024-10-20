@@ -6,5 +6,4 @@ export const groupIdToNameMap: { [key: string]: string } = {
     e: "Group E",
     f: "Group F",
     g: "Group G",
-    h: "Group H",
   };
