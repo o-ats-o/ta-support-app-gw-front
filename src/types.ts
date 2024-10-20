@@ -15,7 +15,6 @@ export interface Group {
 export interface GroupListProps {
   onGroupClick: (group: string) => void;
   displayMode: string;
-  selectedTime: string;
   groupData: GroupData[]; // APIレスポンスの型
   previousGroupData: GroupData[]; // 前の時間のデータの型
 }

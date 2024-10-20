@@ -73,7 +73,13 @@ const App: React.FC = () => {
         const response = await axios.get(
           `${API_BASE_URL}/api/data/?datetime_after=${datetimeAfter}&datetime_before=${datetimeBefore}`
         );
-        setGroupData(response.data);
+
+        // グループデータを group_id でソート
+        const sortedGroupData = [...response.data].sort((a, b) =>
+          a.group_id.localeCompare(b.group_id)
+        );
+
+        setGroupData(sortedGroupData);
         setErrorMessage(null);
 
         // 過去のデータを取得
@@ -157,9 +163,9 @@ const App: React.FC = () => {
         // 時間ラベルを古い順に並べ替え
         setTimeLabels(times.reverse());
 
-        // 取得したデータの最初の要素の group_id を selectedGroup にセット
-        if (response.data.length > 0) {
-          setSelectedGroup(response.data[0].group_id);
+        // ソート済みデータの最初のs group_id を selectedGroup にセット
+        if (sortedGroupData.length > 0) {
+          setSelectedGroup(sortedGroupData[0].group_id);
         }
       } catch (error) {
         if ((error as any).response && (error as any).response.status === 404) {
@@ -244,7 +250,6 @@ const App: React.FC = () => {
             <GroupList
               onGroupClick={handleGroupClick}
               displayMode={displayMode}
-              selectedTime={selectedTime}
               groupData={groupData}
               previousGroupData={previousGroupData[0]} // 最新の前のデータを渡す
             />

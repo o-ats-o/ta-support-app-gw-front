@@ -1,30 +1,17 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { GroupListProps } from "../types";
 import { groupIdToNameMap } from "../utils/groupMappings";
 
 const GroupList: React.FC<GroupListProps> = ({
   onGroupClick,
   displayMode,
-  selectedTime,
   groupData,
   previousGroupData,
 }) => {
-  // group_idを昇順にソート
-  const sortedGroupData = [...groupData].sort((a, b) =>
-    a.group_id.localeCompare(b.group_id)
-  );
-
   // 変化量を計算する関数
   const calculateChange = (currentValue: number, previousValue: number) => {
     return currentValue - previousValue;
   };
-
-  // 最初の要素が変更されたときに onGroupClick を呼び出す
-  useEffect(() => {
-    if (sortedGroupData.length > 0) {
-      onGroupClick(sortedGroupData[0].group_id);
-    }
-  }, [sortedGroupData, onGroupClick]);
 
   return (
     <div>
@@ -35,7 +22,7 @@ const GroupList: React.FC<GroupListProps> = ({
           <span>変化量</span>
         </li>
         {/* ソートされたグループデータのリスト */}
-        {sortedGroupData.map((group, index) => {
+        {groupData.map((group, index) => {
           const previousGroup = previousGroupData
             ? previousGroupData.find(
                 (prevGroup) => prevGroup.group_id === group.group_id
@@ -54,7 +41,7 @@ const GroupList: React.FC<GroupListProps> = ({
 
           return (
             <li
-              key={index}
+              key={group.group_id}
               className="flex items-center justify-between py-2 px-4 -mx-4 border-2 border-gray-50 bg-white cursor-pointer hover:bg-gray-100 font-bold"
               style={{ minHeight: "60px" }}
               onClick={() => onGroupClick(group.group_id)}
