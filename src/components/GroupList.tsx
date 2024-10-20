@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { GroupListProps } from "../types";
 import { groupIdToNameMap } from "../utils/groupMappings";
 
@@ -18,6 +18,13 @@ const GroupList: React.FC<GroupListProps> = ({
   const calculateChange = (currentValue: number, previousValue: number) => {
     return currentValue - previousValue;
   };
+
+  // 最初の要素が変更されたときに onGroupClick を呼び出す
+  useEffect(() => {
+    if (sortedGroupData.length > 0) {
+      onGroupClick(sortedGroupData[0].group_id);
+    }
+  }, [sortedGroupData, onGroupClick]);
 
   return (
     <div>

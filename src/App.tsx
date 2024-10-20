@@ -20,7 +20,7 @@ const generateTimeOptions = () => {
 };
 
 const App: React.FC = () => {
-  const [selectedGroup, setSelectedGroup] = useState("a");
+  const [selectedGroup, setSelectedGroup] = useState("");
   const [displayMode, setDisplayMode] = useState("発話回数");
   const [selectedTime, setSelectedTime] = useState(
     localStorage.getItem("selectedTime") || "09:00〜"
@@ -75,7 +75,6 @@ const App: React.FC = () => {
         );
         setGroupData(response.data);
         setErrorMessage(null);
-        console.log("API Response:", response.data);
 
         // 過去のデータを取得
         const previousDataPromises = [];
@@ -158,12 +157,18 @@ const App: React.FC = () => {
         // 時間ラベルを古い順に並べ替え
         setTimeLabels(times.reverse());
 
-        console.log("Previous API Responses:", previousDataResults);
+        // 取得したデータの最初の要素の group_id を selectedGroup にセット
+        if (response.data.length > 0) {
+          setSelectedGroup(response.data[0].group_id);
+        }
       } catch (error) {
         if ((error as any).response && (error as any).response.status === 404) {
           setErrorMessage("一致する検索結果がありません");
         } else {
           console.error("データ取得中にエラーが発生しました:", error);
+          setErrorMessage(
+            "データの取得に失敗しました。時間をおいて再度お試しください。"
+          );
         }
       }
     };
