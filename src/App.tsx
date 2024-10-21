@@ -1,15 +1,193 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import GroupList from "./components/GroupList";
 import GroupDetail from "./components/GroupDetail";
 import Header from "./components/Header";
+import axios from "axios";
+import { API_BASE_URL, DATE } from "./config";
+
+const generateTimeOptions = () => {
+  const times = [];
+  for (let hour = 10; hour <= 12; hour++) {
+    for (let minute = hour === 10 ? 40 : 0; minute < 60; minute += 5) {
+      if (hour === 12 && minute > 5) break;
+      const time = `${hour.toString().padStart(2, "0")}:${minute
+        .toString()
+        .padStart(2, "0")}〜`;
+      times.push(time);
+    }
+  }
+  return times;
+};
 
 const App: React.FC = () => {
-  const [selectedGroup, setSelectedGroup] = useState("Group A");
+  const [selectedGroup, setSelectedGroup] = useState("");
   const [displayMode, setDisplayMode] = useState("発話回数");
-  const [selectedTime, setSelectedTime] = useState("13:40");
+  const [selectedTime, setSelectedTime] = useState(
+    localStorage.getItem("selectedTime") || "09:00〜"
+  );
+  const [groupData, setGroupData] = useState<any[]>([]); // 初期値を空の配列に設定
+  const [previousGroupData, setPreviousGroupData] = useState<any[][]>([]); // 初期値を空の配列に設定
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [timeLabels, setTimeLabels] = useState<string[]>([]);
 
   const handleGroupClick = (group: string) => {
     setSelectedGroup(group);
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const times: string[] = [];
+        const [hourStr, minuteStr] = selectedTime.slice(0, -1).split(":");
+        const hour = parseInt(hourStr);
+        const minute = parseInt(minuteStr);
+
+        times.push(`${hourStr}:${minuteStr}`);
+
+        // データ取得の開始時間を選択した時間から5分後に設定
+        let dataHour = hour;
+        let dataMinute = minute + 5;
+
+        if (dataMinute >= 60) {
+          dataMinute -= 60;
+          dataHour += 1;
+        }
+
+        const datetimeAfter = `${process.env.DATE}${dataHour
+          .toString()
+          .padStart(2, "0")}:${dataMinute.toString().padStart(2, "0")}:00`;
+
+        // データ取得の終了時間（開始時間から4分59秒後）
+        let endMinute = dataMinute + 4;
+        let endHour = dataHour;
+
+        if (endMinute >= 60) {
+          endMinute -= 60;
+          endHour += 1;
+        }
+
+        const datetimeBefore = `${process.env.DATE}${endHour
+          .toString()
+          .padStart(2, "0")}:${endMinute.toString().padStart(2, "0")}:59`;
+
+        const response = await axios.get(
+          `${process.env.API_BASE_URL}/api/data/?datetime_after=${datetimeAfter}&datetime_before=${datetimeBefore}`
+        );
+
+        // グループデータを group_id でソート
+        const sortedGroupData = [...response.data].sort((a, b) =>
+          a.group_id.localeCompare(b.group_id)
+        );
+
+        setGroupData(sortedGroupData);
+        setErrorMessage(null);
+
+        // 過去のデータを取得
+        const previousDataPromises = [];
+        for (let i = 1; i <= 4; i++) {
+          let previousDataMinute = dataMinute - 5 * i;
+          let previousDataHour = dataHour;
+
+          while (previousDataMinute < 0) {
+            previousDataMinute += 60;
+            previousDataHour -= 1;
+          }
+
+          if (previousDataHour < 0) {
+            times.push("無効な時間");
+            previousDataPromises.push(Promise.resolve([]));
+            continue;
+          }
+
+          const formattedPreviousDataMinute = previousDataMinute
+            .toString()
+            .padStart(2, "0");
+          const formattedPreviousDataHour = previousDataHour
+            .toString()
+            .padStart(2, "0");
+
+          const previousDatetimeAfter = `${process.env.DATE}${formattedPreviousDataHour}:${formattedPreviousDataMinute}:00`;
+
+          let endPreviousDataMinute = previousDataMinute + 4;
+          let endPreviousDataHour = previousDataHour;
+
+          if (endPreviousDataMinute >= 60) {
+            endPreviousDataMinute -= 60;
+            endPreviousDataHour += 1;
+          }
+
+          const previousDatetimeBefore = `${
+            process.env.DATE
+          }${endPreviousDataHour
+            .toString()
+            .padStart(2, "0")}:${endPreviousDataMinute
+            .toString()
+            .padStart(2, "0")}:59`;
+
+          // 時間ラベルは選択した時間から i * 5 分引いた時間を使用
+          let labelMinute = minute - 5 * i;
+          let labelHour = hour;
+
+          while (labelMinute < 0) {
+            labelMinute += 60;
+            labelHour -= 1;
+          }
+
+          if (labelHour < 0) {
+            times.push("無効な時間");
+          } else {
+            times.push(
+              `${labelHour.toString().padStart(2, "0")}:${labelMinute
+                .toString()
+                .padStart(2, "0")}`
+            );
+          }
+
+          previousDataPromises.push(
+            axios
+              .get(
+                `${process.env.API_BASE_URL}/api/data/?datetime_after=${previousDatetimeAfter}&datetime_before=${previousDatetimeBefore}`
+              )
+              .then((res) => res.data)
+              .catch((error) => {
+                console.error(
+                  "過去のデータ取得中にエラーが発生しました:",
+                  error
+                );
+                return [];
+              })
+          );
+        }
+
+        const previousDataResults = await Promise.all(previousDataPromises);
+        setPreviousGroupData(previousDataResults);
+
+        // 時間ラベルを古い順に並べ替え
+        setTimeLabels(times.reverse());
+
+        // ソート済みデータの最初のs group_id を selectedGroup にセット
+        if (sortedGroupData.length > 0) {
+          setSelectedGroup(sortedGroupData[0].group_id);
+        }
+      } catch (error) {
+        if ((error as any).response && (error as any).response.status === 404) {
+          setErrorMessage("一致する検索結果がありません");
+        } else {
+          console.error("データ取得中にエラーが発生しました:", error);
+          setErrorMessage(
+            "データの取得に失敗しました。時間をおいて再度お試しください。"
+          );
+        }
+      }
+    };
+
+    fetchData();
+  }, [selectedTime]);
+
+  const handleTimeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newTime = e.target.value;
+    setSelectedTime(newTime);
+    localStorage.setItem("selectedTime", newTime);
   };
 
   return (
@@ -57,23 +235,36 @@ const App: React.FC = () => {
             <select
               className="ml-12 mb-2 p-2 border rounded"
               value={selectedTime}
-              onChange={(e) => setSelectedTime(e.target.value)}
+              onChange={handleTimeChange}
             >
-              <option value="13:20">13:20</option>
-              <option value="13:25">13:25</option>
-              <option value="13:30">13:30</option>
-              <option value="13:35">13:35</option>
-              <option value="13:40">13:40</option>
+              {generateTimeOptions().map((time) => (
+                <option key={time} value={time}>
+                  {time}
+                </option>
+              ))}
             </select>
           </div>
-          <GroupList
-            onGroupClick={handleGroupClick}
-            displayMode={displayMode}
-            selectedTime={selectedTime}
-          />
+          {errorMessage ? (
+            <div className="flex justify-center items-center text-black-500 font-bold h-full pb-32">
+              {errorMessage}
+            </div>
+          ) : (
+            <GroupList
+              onGroupClick={handleGroupClick}
+              displayMode={displayMode}
+              groupData={groupData}
+              previousGroupData={previousGroupData[0]} // 最新の前のデータを渡す
+            />
+          )}
         </div>
         <div className="flex-1 p-4 overflow-y-auto border rounded-r-md border-[rgba(36,141,116,1)] mt-4 mr-2 group-detail">
-          <GroupDetail groupName={selectedGroup} displayMode={displayMode} />
+          <GroupDetail
+            groupName={selectedGroup}
+            groupData={groupData}
+            previousGroupData={previousGroupData}
+            timeLabels={timeLabels}
+            errorMessage={errorMessage}
+          />
         </div>
       </div>
     </div>

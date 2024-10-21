@@ -1,11 +1,18 @@
 import React from "react";
-import { groups, GroupListProps } from "../types";
+import { GroupListProps } from "../types";
+import { groupIdToNameMap } from "../utils/groupMappings";
 
 const GroupList: React.FC<GroupListProps> = ({
   onGroupClick,
   displayMode,
-  selectedTime,
+  groupData,
+  previousGroupData,
 }) => {
+  // 変化量を計算する関数
+  const calculateChange = (currentValue: number, previousValue: number) => {
+    return currentValue - previousValue;
+  };
+
   return (
     <div>
       <ul>
@@ -14,48 +21,69 @@ const GroupList: React.FC<GroupListProps> = ({
           <span>{displayMode === "発話回数" ? "発話回数" : "感情スコア"}</span>
           <span>変化量</span>
         </li>
-        {/* グループデータのリスト */}
-        {groups.map((group, index) => (
-          <li
-            key={index}
-            className="flex items-center justify-between py-2 px-4 -mx-4 border-2 border-gray-50 bg-white cursor-pointer hover:bg-gray-100 font-bold"
-            style={{ minHeight: "60px" }}
-            onClick={() => onGroupClick(group.name)}
-          >
-            <span className="text-lg ml-4">{group.name}</span>
-            {displayMode === "発話回数" ? (
-              <>
-                <span>{group.data[selectedTime].count}回</span>
-                <span
-                  className={`ml-2 ${
-                    group.data[selectedTime].countChange >= 0
-                      ? "text-green-500 mr-6"
-                      : "text-red-500 mr-6"
-                  }`}
-                >
-                  {group.data[selectedTime].countChange >= 0
-                    ? `+${group.data[selectedTime].countChange}`
-                    : group.data[selectedTime].countChange}
-                </span>
-              </>
-            ) : (
-              <>
-                <span>{group.data[selectedTime].emotion.toFixed(1)}</span>
-                <span
-                  className={`ml-2 ${
-                    group.data[selectedTime].emotionChange >= 0
-                      ? "text-green-500 mr-6"
-                      : "text-red-500 mr-6"
-                  }`}
-                >
-                  {group.data[selectedTime].emotionChange >= 0
-                    ? `+${group.data[selectedTime].emotionChange}`
-                    : group.data[selectedTime].emotionChange}
-                </span>
-              </>
-            )}
-          </li>
-        ))}
+        {/* ソートされたグループデータのリスト */}
+        {groupData.map((group, index) => {
+          const previousGroup = previousGroupData
+            ? previousGroupData.find(
+                (prevGroup) => prevGroup.group_id === group.group_id
+              )
+            : null;
+          const change =
+            displayMode === "発話回数"
+              ? calculateChange(
+                  group.utterance_count,
+                  previousGroup ? previousGroup.utterance_count : 0
+                )
+              : calculateChange(
+                  group.sentiment_value,
+                  previousGroup ? previousGroup.sentiment_value : 0
+                );
+
+          return (
+            <li
+              key={group.group_id}
+              className="flex items-center justify-between py-2 px-4 -mx-4 border-2 border-gray-50 bg-white cursor-pointer hover:bg-gray-100 font-bold"
+              style={{ minHeight: "60px" }}
+              onClick={() => onGroupClick(group.group_id)}
+            >
+              <span className="text-lg ml-4">
+                {groupIdToNameMap[group.group_id]}{" "}
+                {/* group_idをグループ名に変換 */}
+              </span>
+              {displayMode === "発話回数" ? (
+                <>
+                  <span>{group.utterance_count}回</span>
+                  <span
+                    className={`ml-2 ${
+                      change > 0
+                        ? "text-green-500 mr-6"
+                        : change < 0
+                        ? "text-red-500 mr-6"
+                        : "text-gray-500 mr-6"
+                    }`}
+                  >
+                    {change > 0 ? `+${change}` : change}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span>{group.sentiment_value.toFixed(2)}</span>
+                  <span
+                    className={`ml-2 ${
+                      change > 0
+                        ? "text-green-500 mr-6"
+                        : change < 0
+                        ? "text-red-500 mr-6"
+                        : "text-gray-500 mr-6"
+                    }`}
+                  >
+                    {change > 0 ? `+${change.toFixed(2)}` : change.toFixed(2)}
+                  </span>
+                </>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

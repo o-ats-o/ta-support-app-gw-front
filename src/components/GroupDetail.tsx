@@ -1,31 +1,66 @@
 import React, { useState, useEffect } from "react";
-import { GroupDetailProps, groupDetailData } from "../types";
+import { GroupDetailProps } from "../types";
 import TimeTransitionGraph from "./TimeTransitionGraph";
+import { groupIdToNameMap } from "../utils/groupMappings";
 
 const GroupDetail: React.FC<GroupDetailProps> = ({
   groupName,
-  displayMode,
+  groupData,
+  previousGroupData,
+  timeLabels,
+  errorMessage,
 }) => {
-  const [graphMode, setGraphMode] = useState(displayMode);
-  const [visibleGroups, setVisibleGroups] = useState([groupName]);
-  const [selectedGroup, setSelectedGroup] = useState<string>(groupName);
+  const [graphMode, setGraphMode] = useState<string>("発話回数");
+  const [dataValues, setDataValues] = useState<{ [key: string]: number[] }>({});
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([groupName]);
+  const [showAllGroups, setShowAllGroups] = useState<boolean>(false);
 
   useEffect(() => {
-    if (groupName) {
-      setVisibleGroups([groupName]);
-      setSelectedGroup(groupName);
-    }
-  }, [groupName]);
+    const allGroupData = previousGroupData
+      ? [...previousGroupData.slice().reverse(), groupData]
+      : [groupData];
 
-  // グループ名に基づいて色を返す関数
+    const newDataValues: { [key: string]: number[] } = {};
+
+    for (const group in groupIdToNameMap) {
+      const values: number[] = [];
+      for (const groupDataAtTime of allGroupData) {
+        const groupEntry = groupDataAtTime.find((g) => g.group_id === group);
+        let value = 0;
+        if (groupEntry) {
+          value =
+            graphMode === "発話回数"
+              ? groupEntry.utterance_count
+              : groupEntry.sentiment_value;
+        }
+        values.push(value);
+      }
+      newDataValues[group] = values;
+    }
+
+    setDataValues(newDataValues);
+  }, [graphMode, groupData, previousGroupData]);
+
+  useEffect(() => {
+    if (showAllGroups) {
+      // 全グループを選択
+      setSelectedGroups(Object.keys(groupIdToNameMap));
+    } else {
+      // 選択されたグループのみを表示
+      setSelectedGroups([groupName]);
+    }
+  }, [groupName, showAllGroups]);
+
   const getGroupColor = (name: string) => {
     const colors = [
-      "#FF6384",
-      "#36A2EB",
-      "#FFCE56",
-      "#cc65fe",
-      "#248D74",
-      "#ffcd56",
+      "#845ec2",
+      "#ff6f91",
+      "#ffc75f",
+      "#f9f871",
+      "#008f7a",
+      "#2c73d2",
+      "#cf5a32",
+      "#2effdc",
     ];
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
@@ -34,15 +69,26 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
     return colors[Math.abs(hash) % colors.length];
   };
 
-  // 「all」ボタンのイベントハンドラー
-  const showAllGroups = () => {
-    setVisibleGroups(Object.keys(groupDetailData));
-  };
+  const allGroupData = previousGroupData
+    ? [...previousGroupData.slice().reverse(), groupData]
+    : [groupData];
+
+  if (errorMessage) {
+    return (
+      <div className="flex justify-center items-center h-full p-32">
+        <img
+          src="./errorImage.png"
+          alt="Error"
+          style={{ width: "120px", height: "120px" }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div>
       <h2 className="text-xl font-bold mb-2 underline text-[rgba(36,141,116,1)]">
-        {selectedGroup}
+        {groupIdToNameMap[groupName]}
       </h2>
       <div className="mb-4">
         <h3 className="text-lg mb-1 font-bold text-[rgba(36,141,116,1)]">
@@ -87,17 +133,19 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
               </span>
             </button>
           </div>
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-end mr-4">
             <button
-              onClick={showAllGroups}
-              className="px-5 py-1 bg-[rgba(36,141,116,1)] text-white rounded hover:bg-[rgba(36,141,116,0.8)]"
+              onClick={() => setShowAllGroups(!showAllGroups)}
+              className="mb-4 px-2 py-1.5 bg-[rgba(36,141,116,1)] text-white rounded"
             >
-              all
+              {showAllGroups ? "選択グループを表示" : "全グループを表示"}
             </button>
           </div>
           <TimeTransitionGraph
             graphMode={graphMode}
-            visibleGroups={visibleGroups}
+            dataValues={dataValues}
+            timeLabels={timeLabels}
+            selectedGroups={selectedGroups}
             getGroupColor={getGroupColor}
           />
         </div>
@@ -110,9 +158,25 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
           className="border p-2 overflow-y-auto"
           style={{ minHeight: "15em", maxHeight: "15em" }}
         >
-          {groupDetailData[selectedGroup]?.history.map((entry, index) => (
-            <p key={index}>{entry}</p>
-          ))}
+          {allGroupData.map((data, index) => {
+            const timeLabel = timeLabels[index];
+            const groupEntry = data.find(
+              (entry) => entry.group_id === groupName
+            );
+
+            return (
+              <div key={index} className="mb-4">
+                <h4 className="font-bold">{timeLabel}</h4>
+                {groupEntry && groupEntry.transcript_diarize ? (
+                  <div style={{ whiteSpace: "pre-wrap" }}>
+                    {groupEntry.transcript_diarize}
+                  </div>
+                ) : (
+                  <p>会話がありません</p>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
       <div className="mb-4">
@@ -123,7 +187,7 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
           className="border p-2 overflow-y-auto"
           style={{ minHeight: "15em", maxHeight: "15em" }}
         >
-          <p>{groupDetailData[selectedGroup]?.scenario}</p>
+          <p>現在開発中です</p>
         </div>
       </div>
     </div>

@@ -1,49 +1,45 @@
 import React, { useState, useEffect } from "react";
 import { Line } from "react-chartjs-2";
 import "chart.js/auto";
-import { ChartEvent, LegendItem } from "chart.js";
-import { groupDetailData, TimeTransitionGraphProps } from "../types";
+import { TimeTransitionGraphProps } from "../types";
+import { groupIdToNameMap } from "../utils/groupMappings";
 
 const TimeTransitionGraph: React.FC<TimeTransitionGraphProps> = ({
   graphMode,
+  dataValues,
+  timeLabels,
+  selectedGroups,
   getGroupColor,
-  visibleGroups: initialVisibleGroups,
 }) => {
-  const [visibleGroups, setVisibleGroups] =
-    useState<string[]>(initialVisibleGroups);
+  const [hiddenGroups, setHiddenGroups] = useState<string[]>([]);
 
+  // selectedGroupsが変更されたとき、hiddenGroupsを更新
   useEffect(() => {
-    setVisibleGroups(initialVisibleGroups);
-  }, [initialVisibleGroups]);
+    const groupsToHide = Object.keys(dataValues).filter(
+      (group) => !selectedGroups.includes(group)
+    );
+    setHiddenGroups(groupsToHide.map((group) => groupIdToNameMap[group]));
+  }, [selectedGroups, dataValues]);
 
-  const toggleGroupVisibility = (groupName: string) => {
-    setVisibleGroups((currentVisibleGroups) =>
-      currentVisibleGroups.includes(groupName)
-        ? currentVisibleGroups.filter((name) => name !== groupName)
-        : [...currentVisibleGroups, groupName]
+  const handleLegendClick = (e: any, legendItem: any) => {
+    const group = legendItem.text;
+    setHiddenGroups((prev) =>
+      prev.includes(group) ? prev.filter((g) => g !== group) : [...prev, group]
     );
   };
 
-  const labels = ["13:20", "13:25", "13:30", "13:35", "13:40"];
+  const datasets = Object.keys(dataValues).map((group) => ({
+    label: `${groupIdToNameMap[group]}`,
+    data: dataValues[group],
+    borderColor: getGroupColor(group),
+    borderWidth: 2,
+    fill: false,
+    hidden: hiddenGroups.includes(groupIdToNameMap[group]),
+  }));
 
   const data = {
-    labels,
-    datasets: Object.keys(groupDetailData)
-      .map((name) => {
-        const group = groupDetailData[name];
-        if (!group) return null;
-        return {
-          label: name,
-          data: graphMode === "発話回数" ? group.data : group.emotion,
-          borderColor: getGroupColor(name),
-          borderWidth: 2,
-          fill: false,
-          hidden: !visibleGroups.includes(name),
-        };
-      })
-      .filter(
-        (dataset): dataset is NonNullable<typeof dataset> => dataset !== null
-      ),
+    labels: timeLabels,
+    datasets: datasets,
   };
 
   const options = {
@@ -54,9 +50,7 @@ const TimeTransitionGraph: React.FC<TimeTransitionGraphProps> = ({
     },
     plugins: {
       legend: {
-        onClick: (e: ChartEvent, legendItem: LegendItem, legend: any) => {
-          toggleGroupVisibility(legendItem.text);
-        },
+        onClick: handleLegendClick,
       },
     },
   };
