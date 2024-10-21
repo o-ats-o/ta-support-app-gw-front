@@ -7,8 +7,8 @@ import { API_BASE_URL, DATE } from "./config";
 
 const generateTimeOptions = () => {
   const times = [];
-  for (let hour = 9; hour <= 12; hour++) {
-    for (let minute = 0; minute < 60; minute += 5) {
+  for (let hour = 10; hour <= 12; hour++) {
+    for (let minute = hour === 10 ? 40 : 0; minute < 60; minute += 5) {
       if (hour === 12 && minute > 5) break;
       const time = `${hour.toString().padStart(2, "0")}:${minute
         .toString()
@@ -53,7 +53,7 @@ const App: React.FC = () => {
           dataHour += 1;
         }
 
-        const datetimeAfter = `${DATE}${dataHour
+        const datetimeAfter = `${process.env.DATE}${dataHour
           .toString()
           .padStart(2, "0")}:${dataMinute.toString().padStart(2, "0")}:00`;
 
@@ -66,12 +66,12 @@ const App: React.FC = () => {
           endHour += 1;
         }
 
-        const datetimeBefore = `${DATE}${endHour
+        const datetimeBefore = `${process.env.DATE}${endHour
           .toString()
           .padStart(2, "0")}:${endMinute.toString().padStart(2, "0")}:59`;
 
         const response = await axios.get(
-          `${API_BASE_URL}/api/data/?datetime_after=${datetimeAfter}&datetime_before=${datetimeBefore}`
+          `${process.env.API_BASE_URL}/api/data/?datetime_after=${datetimeAfter}&datetime_before=${datetimeBefore}`
         );
 
         // グループデータを group_id でソート
@@ -106,7 +106,7 @@ const App: React.FC = () => {
             .toString()
             .padStart(2, "0");
 
-          const previousDatetimeAfter = `${DATE}${formattedPreviousDataHour}:${formattedPreviousDataMinute}:00`;
+          const previousDatetimeAfter = `${process.env.DATE}${formattedPreviousDataHour}:${formattedPreviousDataMinute}:00`;
 
           let endPreviousDataMinute = previousDataMinute + 4;
           let endPreviousDataHour = previousDataHour;
@@ -116,7 +116,9 @@ const App: React.FC = () => {
             endPreviousDataHour += 1;
           }
 
-          const previousDatetimeBefore = `${DATE}${endPreviousDataHour
+          const previousDatetimeBefore = `${
+            process.env.DATE
+          }${endPreviousDataHour
             .toString()
             .padStart(2, "0")}:${endPreviousDataMinute
             .toString()
@@ -144,7 +146,7 @@ const App: React.FC = () => {
           previousDataPromises.push(
             axios
               .get(
-                `${API_BASE_URL}/api/data/?datetime_after=${previousDatetimeAfter}&datetime_before=${previousDatetimeBefore}`
+                `${process.env.API_BASE_URL}/api/data/?datetime_after=${previousDatetimeAfter}&datetime_before=${previousDatetimeBefore}`
               )
               .then((res) => res.data)
               .catch((error) => {
